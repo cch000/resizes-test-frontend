@@ -9,7 +9,7 @@ export interface Task {
 
 export interface ColumnType {
     title: Status;
-    cards: Task[];
+    tasks: Task[];
 }
 
 export interface MoveParams {
@@ -19,12 +19,12 @@ export interface MoveParams {
     targetIndex: number;
 }
 
-export interface CardProps {
-    card: Task;
+export interface TaskProps {
+    task: Task;
     index: number;
     columnId: Status;
-    deleteCard: (columnId: Status, cardId: string) => void;
-    moveCard: (params: MoveParams) => void;
+    deletetask: (columnId: Status, taskId: string) => void;
+    movetask: (params: MoveParams) => void;
 }
 
 export interface DragItem {
