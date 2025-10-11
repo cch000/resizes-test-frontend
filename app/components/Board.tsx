@@ -8,9 +8,9 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import { useEffect } from "react";
 
 const Board: React.FC = () => {
-  const { columns, addCard, deleteCard, moveCard, getTasks } = useBoard();
+  const { columns, addtask, deletetask, movetask, getTasks } = useBoard();
 
-  useEffect(() => { getTasks(); }, [])
+  useEffect(() => { getTasks(); }, [getTasks])
 
   return (
 
@@ -21,9 +21,9 @@ const Board: React.FC = () => {
             key={col.title}
             column={col}
             allColumns={columns}
-            addCard={addCard}
-            deleteCard={deleteCard}
-            moveCard={moveCard}
+            addtask={addtask}
+            deletetask={deletetask}
+            movetask={movetask}
           />
         ))}
       </div>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { nanoid } from "nanoid";
-import { Task, ColumnType, MoveParams } from "../types"; // assumes you have types defined there
+import { Task, ColumnType, MoveParams } from "../types";
 import { Status } from "../types";
 import axios from "axios";
 
@@ -10,27 +10,26 @@ export default function useBoard() {
     const [columns, setColumns] = useState<ColumnType[]>([
         {
             title: "TODO",
-            cards: [],
+            tasks: [],
 
         },
         {
             title: "INPROGRESS",
-            cards: [],
+            tasks: [],
         },
         {
             title: "DONE",
-            cards: [],
+            tasks: [],
         },
     ]);
 
 
     const getTasks = () => {
         axios.get(endpoint_url).then((res) => {
-            let tasks: Array<Task> = res.data;
-
-            let todo: Array<Task> = [];
-            let inprogress: Array<Task> = [];
-            let done: Array<Task> = [];
+            const tasks: Array<Task> = res.data;
+            const todo: Array<Task> = [];
+            const inprogress: Array<Task> = [];
+            const done: Array<Task> = [];
 
             tasks.map((task) => {
                 console.log(task.id)
@@ -40,18 +39,17 @@ export default function useBoard() {
                     case "DONE": done.push(task); break;
                 }
             })
-            // Update columns based on grouped tasks
             setColumns([
-                { title: "TODO", cards: todo },
-                { title: "INPROGRESS", cards: inprogress },
-                { title: "DONE", cards: done },
+                { title: "TODO", tasks: todo },
+                { title: "INPROGRESS", tasks: inprogress },
+                { title: "DONE", tasks: done },
             ]);
 
         })
     }
 
-    const addCard = (columnTitle: Status, title: string, description: string) => {
-        const newCard: Task = {
+    const addtask = (columnTitle: Status, title: string, description: string) => {
+        const newtask: Task = {
             id: nanoid(),
             status: columnTitle,
             title,
@@ -61,40 +59,37 @@ export default function useBoard() {
         setColumns(cols =>
             cols.map(col =>
                 col.title === columnTitle
-                    ? { ...col, cards: [...col.cards, newCard] }
+                    ? { ...col, tasks: [...col.tasks, newtask] }
                     : col
             )
         );
 
-        axios.post(endpoint_url, newCard)
+        axios.post(endpoint_url, newtask)
     };
 
-    const deleteCard = (columnTitle: Status, cardId: string) => {
-
-        axios.delete(`${endpoint_url}/${cardId}`)
+    const deletetask = (columnTitle: Status, taskId: string) => {
+        axios.delete(`${endpoint_url}/${taskId}`)
 
         setColumns(cols =>
             cols.map(col =>
                 col.title === columnTitle
                     ? {
                         ...col,
-                        cards: col.cards.filter(card => card.id !== cardId),
+                        tasks: col.tasks.filter(task => task.id !== taskId),
                     }
                     : col
             )
 
-
         );
-
     };
 
-    const moveCard = (params: MoveParams) => {
+    const movetask = (params: MoveParams) => {
         const { sourceColId, targetColId, sourceIndex, targetIndex } = params;
 
         setColumns(cols => {
             const newCols = cols.map(col => ({
                 ...col,
-                cards: [...col.cards],
+                tasks: [...col.tasks],
             }));
 
             const sourceCol = newCols.find(col => col.title === sourceColId);
@@ -102,20 +97,19 @@ export default function useBoard() {
 
             if (!sourceCol || !targetCol) return newCols;
 
-            const [movedCard] = sourceCol.cards.splice(sourceIndex, 1);
+            const [movedtask] = sourceCol.tasks.splice(sourceIndex, 1);
 
-            // Update the task's status when moving columns
-            const updatedCard = { ...movedCard, status: targetColId };
+            const updatedtask = { ...movedtask, status: targetColId };
 
-            axios.put(endpoint_url + "/" + updatedCard.id,
-                updatedCard
+            axios.put(endpoint_url + "/" + updatedtask.id,
+                updatedtask
             )
 
-            targetCol.cards.splice(targetIndex, 0, updatedCard);
+            targetCol.tasks.splice(targetIndex, 0, updatedtask);
 
             return newCols;
         });
     };
 
-    return { columns, addCard, deleteCard, moveCard, getTasks };
+    return { columns, addtask, deletetask, movetask, getTasks };
 }

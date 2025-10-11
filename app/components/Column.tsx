@@ -1,30 +1,30 @@
 "use client";
 import React, { useState, useRef } from "react";
 import { useDrop } from "react-dnd";
-import Card from "./Card";
+import Task from "./Task";
 import styles from "../styles/Kanban.module.css";
 import { ColumnType, DragItem, MoveParams, Status } from "../types";
 
 interface ColumnProps {
   column: ColumnType;
   allColumns: ColumnType[];
-  addCard: (columnId: Status, title: string, description: string) => void;
-  deleteCard: (columnId: Status, cardId: string) => void;
-  moveCard: (params: MoveParams) => void;
+  addtask: (columnId: Status, title: string, description: string) => void;
+  deletetask: (columnId: Status, taskId: string) => void;
+  movetask: (params: MoveParams) => void;
 }
 
 const Column: React.FC<ColumnProps> = ({
   column,
-  addCard,
-  deleteCard,
-  moveCard,
+  addtask,
+  deletetask,
+  movetask,
 }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
 
   const handleAdd = () => {
     if (title.trim()) {
-      addCard(column.title, title, description);
+      addtask(column.title, title, description);
       setTitle("");
       setDescription("");
     }
@@ -32,15 +32,15 @@ const Column: React.FC<ColumnProps> = ({
   const ref = useRef<HTMLDivElement>(null);
 
   const [, drop] = useDrop<DragItem>({
-    accept: "CARD",
+    accept: "TASK",
     drop: (item, monitor) => {
 
       if (!monitor.didDrop()) {
-        moveCard({
+        movetask({
           sourceColId: item.sourceColId,
           targetColId: column.title,
           sourceIndex: item.sourceIndex,
-          targetIndex: column.cards.length,
+          targetIndex: column.tasks.length,
         });
       }
 
@@ -57,23 +57,23 @@ const Column: React.FC<ColumnProps> = ({
   return (
     <div className={styles.column} ref={ref}>
       <h3>{column.title}</h3>
-      <div className={styles.cardList}>
-        {column.cards.map((card, index) => (
-          <Card
-            key={card.id}
-            card={card}
+      <div className={styles.taskList}>
+        {column.tasks.map((task, index) => (
+          <Task
+            key={task.id}
+            task={task}
             index={index}
             columnId={column.title}
-            deleteCard={deleteCard}
-            moveCard={moveCard}
+            deletetask={deletetask}
+            movetask={movetask}
           />
         ))}
       </div>
-      <div className={styles.addCard}>
+      <div className={styles.addtask}>
         <input
           type="text"
           value={title}
-          placeholder="New card..."
+          placeholder="New task..."
           onChange={(e) => setTitle(e.target.value)}
         />
         <input
