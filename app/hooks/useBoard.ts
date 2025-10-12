@@ -89,7 +89,6 @@ export default function useBoard() {
                     return { ...col, tasks: col.tasks.filter(t => t.id !== task.id) };
                 }
                 if (col.title === targetColId) {
-                    const filteredTasks = col.tasks.filter(t => t.id !== task.id);
                     return { ...col, tasks: [...col.tasks, updatedTask] };
                 }
                 return col;
