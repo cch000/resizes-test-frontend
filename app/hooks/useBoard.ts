@@ -1,114 +1,102 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { nanoid } from "nanoid";
-import { Task, ColumnType, MoveParams } from "../types";
-import { Status } from "../types";
 import axios from "axios";
+import { Task, ColumnType, MoveParams, Status } from "../types";
 
 const endpoint_url = "http://localhost:8000/tasks";
 
 export default function useBoard() {
     const [columns, setColumns] = useState<ColumnType[]>([
-        {
-            title: "TODO",
-            tasks: [],
-
-        },
-        {
-            title: "INPROGRESS",
-            tasks: [],
-        },
-        {
-            title: "DONE",
-            tasks: [],
-        },
+        { title: "TODO", tasks: [] },
+        { title: "INPROGRESS", tasks: [] },
+        { title: "DONE", tasks: [] },
     ]);
 
+    useEffect(() => {
+        getTasks();
+    }, []);
 
-    const getTasks = () => {
-        axios.get(endpoint_url).then((res) => {
-            const tasks: Array<Task> = res.data;
-            const todo: Array<Task> = [];
-            const inprogress: Array<Task> = [];
-            const done: Array<Task> = [];
+    const getTasks = async () => {
+        try {
+            const res = await axios.get(endpoint_url);
+            const tasks: Task[] = res.data;
 
-            tasks.map((task) => {
-                console.log(task.id)
-                switch (task.status) {
-                    case "TODO": todo.push(task); break;
-                    case "INPROGRESS": inprogress.push(task); break;
-                    case "DONE": done.push(task); break;
-                }
-            })
+            const grouped: Record<Status, Task[]> = {
+                TODO: [],
+                INPROGRESS: [],
+                DONE: [],
+            };
+
+            tasks.forEach(task => {
+                grouped[task.status].push(task);
+            });
+
             setColumns([
-                { title: "TODO", tasks: todo },
-                { title: "INPROGRESS", tasks: inprogress },
-                { title: "DONE", tasks: done },
+                { title: "TODO", tasks: grouped.TODO },
+                { title: "INPROGRESS", tasks: grouped.INPROGRESS },
+                { title: "DONE", tasks: grouped.DONE },
             ]);
+        } catch (error) {
+            console.error("Error fetching tasks:", error);
+        }
+    };
 
-        })
-    }
-
-    const addtask = (columnTitle: Status, title: string, description: string) => {
-        const newtask: Task = {
+    const addtask = async (columnTitle: Status, title: string, description: string) => {
+        const newTask: Task = {
             id: nanoid(),
             status: columnTitle,
             title,
             description,
         };
 
-        setColumns(cols =>
-            cols.map(col =>
-                col.title === columnTitle
-                    ? { ...col, tasks: [...col.tasks, newtask] }
-                    : col
-            )
-        );
-
-        axios.post(endpoint_url, newtask)
+        try {
+            await axios.post(endpoint_url, newTask);
+            setColumns(cols =>
+                cols.map(col =>
+                    col.title === columnTitle
+                        ? { ...col, tasks: [...col.tasks, newTask] }
+                        : col
+                )
+            );
+        } catch (error) {
+            console.error("Error adding task:", error);
+        }
     };
 
-    const deletetask = (columnTitle: Status, taskId: string) => {
-        axios.delete(`${endpoint_url}/${taskId}`)
-
-        setColumns(cols =>
-            cols.map(col =>
-                col.title === columnTitle
-                    ? {
-                        ...col,
-                        tasks: col.tasks.filter(task => task.id !== taskId),
-                    }
-                    : col
-            )
-
-        );
+    const deletetask = async (columnTitle: Status, taskId: string) => {
+        try {
+            await axios.delete(`${endpoint_url}/${taskId}`);
+            setColumns(cols =>
+                cols.map(col =>
+                    col.title === columnTitle
+                        ? { ...col, tasks: col.tasks.filter(task => task.id !== taskId) }
+                        : col
+                )
+            );
+        } catch (error) {
+            console.error("Error deleting task:", error);
+        }
     };
 
-    const movetask = (params: MoveParams) => {
-        const { sourceColId, targetColId, sourceIndex, targetIndex } = params;
+    const movetask = async ({ sourceColId, targetColId, task }: MoveParams) => {
+        if (sourceColId === targetColId) return;
 
-        setColumns(cols => {
-            const newCols = cols.map(col => ({
-                ...col,
-                tasks: [...col.tasks],
-            }));
+        const updatedTask = { ...task, status: targetColId };
 
-            const sourceCol = newCols.find(col => col.title === sourceColId);
-            const targetCol = newCols.find(col => col.title === targetColId);
+        setColumns(cols =>
+            cols.map(col => {
+                if (col.title === sourceColId) {
+                    return { ...col, tasks: col.tasks.filter(t => t.id !== task.id) };
+                }
+                if (col.title === targetColId) {
+                    const filteredTasks = col.tasks.filter(t => t.id !== task.id);
+                    return { ...col, tasks: [...col.tasks, updatedTask] };
+                }
+                return col;
+            })
+        );
 
-            if (!sourceCol || !targetCol) return newCols;
-
-            const [movedtask] = sourceCol.tasks.splice(sourceIndex, 1);
-
-            const updatedtask = { ...movedtask, status: targetColId };
-
-            axios.put(endpoint_url + "/" + updatedtask.id,
-                updatedtask
-            )
-
-            targetCol.tasks.splice(targetIndex, 0, updatedtask);
-
-            return newCols;
-        });
+        await axios.put(`${endpoint_url}/${task.id}`, updatedTask);
     };
 
     return { columns, addtask, deletetask, movetask, getTasks };
