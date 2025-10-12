@@ -20,7 +20,6 @@ const Board: React.FC = () => {
           <Column
             key={col.title}
             column={col}
-            allColumns={columns}
             addtask={addtask}
             deletetask={deletetask}
             movetask={movetask}

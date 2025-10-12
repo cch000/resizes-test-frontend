@@ -2,34 +2,39 @@
 import React, { useRef } from "react";
 import { useDrag } from "react-dnd";
 import styles from "../styles/Kanban.module.css";
-import { TaskProps } from "../types";
+import { DragItem, TaskProps } from "../types";
 
-const task: React.FC<TaskProps> = ({
+const Task: React.FC<TaskProps> = ({
   task,
-  index,
   columnId,
   deletetask,
 }) => {
   const ref = useRef<HTMLDivElement | null>(null);
 
-  const [, drag] = useDrag({
+  const [, drag] = useDrag<DragItem>(() => ({
     type: "TASK",
     item: {
       id: task.id,
+      task,
       sourceColId: columnId,
-      sourceIndex: index,
     },
-  });
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  }));
 
   drag(ref);
 
   return (
-    <div className={styles.task} ref={ref}>
-      <h1>{task.title}</h1>
-      <span>{task.description}</span>
+    <div
+      className={styles.task}
+      ref={ref}
+    >
+      <h4>{task.title}</h4>
+      <p>{task.description}</p>
       <button onClick={() => deletetask(columnId, task.id)}>✕</button>
     </div>
   );
 };
 
-export default task;
+export default Task;
