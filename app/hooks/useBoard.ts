@@ -3,9 +3,10 @@ import { nanoid } from "nanoid";
 import axios from "axios";
 import { Task, ColumnType, MoveParams, Status } from "../types";
 
-const endpoint_url = "http://localhost:8000/tasks";
+const endpoint_url = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/tasks";
 
 export default function useBoard() {
+    
     const [columns, setColumns] = useState<ColumnType[]>([
         { title: "TODO", tasks: [] },
         { title: "INPROGRESS", tasks: [] },
